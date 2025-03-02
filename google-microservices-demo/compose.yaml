@@ -1,0 +1,171 @@
+services:
+  frontend:
+    image: gcr.io/google-samples/microservices-demo/frontend:v0.3.9
+    ports:
+      - "80:8080"
+    environment:
+      - PRODUCT_CATALOG_SERVICE_ADDR=productcatalogservice:3550
+      - CURRENCY_SERVICE_ADDR=currencyservice:7000
+      - CART_SERVICE_ADDR=cartservice:7070
+      - RECOMMENDATION_SERVICE_ADDR=recommendationservice:8080
+      - SHIPPING_SERVICE_ADDR=shippingservice:50051
+      - CHECKOUT_SERVICE_ADDR=checkoutservice:5050
+      - AD_SERVICE_ADDR=adservice:9555
+    depends_on:
+      - productcatalogservice
+      - currencyservice
+      - cartservice
+      - recommendationservice
+      - shippingservice
+      - checkoutservice
+      - adservice
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  productcatalogservice:
+    image: gcr.io/google-samples/microservices-demo/productcatalogservice:v0.3.9
+    ports:
+      - "3550:3550"
+    environment:
+      - PORT=3550
+    healthcheck:
+      test: ["CMD", "grpc_health_probe", "-addr=:3550"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  cartservice:
+    image: gcr.io/google-samples/microservices-demo/cartservice:v0.3.9
+    ports:
+      - "7070:7070"
+    environment:
+      - REDIS_ADDR=redis:6379
+      - PORT=7070
+    depends_on:
+      - redis
+    healthcheck:
+      test: ["CMD", "grpc_health_probe", "-addr=:7070"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  recommendationservice:
+    image: gcr.io/google-samples/microservices-demo/recommendationservice:v0.3.9
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080
+      - PRODUCT_CATALOG_SERVICE_ADDR=productcatalogservice:3550
+    depends_on:
+      - productcatalogservice
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  shippingservice:
+    image: gcr.io/google-samples/microservices-demo/shippingservice:v0.3.9
+    ports:
+      - "50051:50051"
+    healthcheck:
+      test: ["CMD", "grpc_health_probe", "-addr=:50051"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  checkoutservice:
+    image: gcr.io/google-samples/microservices-demo/checkoutservice:v0.3.9
+    ports:
+      - "5050:5050"
+    environment:
+      - PRODUCT_CATALOG_SERVICE_ADDR=productcatalogservice:3550
+      - SHIPPING_SERVICE_ADDR=shippingservice:50051
+      - PAYMENT_SERVICE_ADDR=paymentservice:50051
+      - EMAIL_SERVICE_ADDR=emailservice:8080
+      - CURRENCY_SERVICE_ADDR=currencyservice:7000
+      - CART_SERVICE_ADDR=cartservice:7070
+      - PORT=5050
+    depends_on:
+      - productcatalogservice
+      - shippingservice
+      - paymentservice
+      - emailservice
+      - currencyservice
+      - cartservice
+    healthcheck:
+      test: ["CMD", "grpc_health_probe", "-addr=:5050"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  paymentservice:
+    image: gcr.io/google-samples/microservices-demo/paymentservice:v0.3.9
+    ports:
+      - "50051:50051"
+    healthcheck:
+      test: ["CMD", "grpc_health_probe", "-addr=:50051"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  emailservice:
+    image: gcr.io/google-samples/microservices-demo/emailservice:v0.3.9
+    ports:
+      - "5000:8080"
+    environment:
+      - PORT=8080
+    healthcheck:
+      test: ["CMD", "grpc_health_probe", "-addr=:8080"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  currencyservice:
+    image: gcr.io/google-samples/microservices-demo/currencyservice:v0.3.9
+    ports:
+      - "7000:7000"
+    healthcheck:
+      test: ["CMD", "grpc_health_probe", "-addr=:7000"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  adservice:
+    image: gcr.io/google-samples/microservices-demo/adservice:v0.3.9
+    ports:
+      - "9555:9555"
+    environment:
+      - PORT=9555
+    healthcheck:
+      test: ["CMD", "grpc_health_probe", "-addr=:9555"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 10s
+      retries: 5
+
+  # loadgenerator:
+  #   image: gcr.io/google-samples/microservices-demo/loadgenerator:v0.3.9
+  #   environment:
+  #     - FRONTEND_ADDR=http://frontend:8080
+  #     - USERS=10
+  #   depends_on:
+  #     - frontend
+
+volumes:
+  redis_data:
