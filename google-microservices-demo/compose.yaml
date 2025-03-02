@@ -84,7 +84,7 @@ services:
     environment:
       - PRODUCT_CATALOG_SERVICE_ADDR=productcatalogservice:3550
       - SHIPPING_SERVICE_ADDR=shippingservice:50051
-      - PAYMENT_SERVICE_ADDR=paymentservice:50051
+      - PAYMENT_SERVICE_ADDR=paymentservice:50052
       - EMAIL_SERVICE_ADDR=emailservice:8080
       - CURRENCY_SERVICE_ADDR=currencyservice:7000
       - CART_SERVICE_ADDR=cartservice:7070
@@ -105,7 +105,10 @@ services:
   paymentservice:
     image: gcr.io/google-samples/microservices-demo/paymentservice:v0.3.9
     ports:
-      - "50051:50051"
+      - "50052:50051"
+    environment:
+      - PORT=50051  
+      - DISABLE_PROFILER=1  
     healthcheck:
       test: ["CMD", "grpc_health_probe", "-addr=:50051"]
       interval: 10s
@@ -128,6 +131,11 @@ services:
     image: gcr.io/google-samples/microservices-demo/currencyservice:v0.3.9
     ports:
       - "7000:7000"
+    environment:
+      - PORT=7000  
+      - DISABLE_PROFILER=1  
+      - DISABLE_TRACING=1   
+      - DISABLE_DEBUGGER=1  
     healthcheck:
       test: ["CMD", "grpc_health_probe", "-addr=:7000"]
       interval: 10s
